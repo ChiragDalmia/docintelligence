@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+out/
+*/dist/
+*/build/
+
+# Angular
+.angular/
+frontend/.angular/
+
+# Test coverage
+coverage/
+*/coverage/
+
+# Uploads / persisted data
+server/uploads/*.pdf
+server/uploads/*.txt
+server/uploads/store.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+
+# Claude Code
+.claude/
+
+# Docker
+docker-compose.override.yml
