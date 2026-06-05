@@ -1,0 +1,60 @@
+:root {
+  // Base palette — dark mode only
+  --bg-base:        #0a0b0f;
+  --bg-surface:     #0f1117;
+  --bg-elevated:    #161822;
+  --bg-card:        #1a1d2e;
+  --hover-bg:       rgba(255, 255, 255, 0.04);
+
+  // Borders
+  --border:         rgba(255, 255, 255, 0.08);
+  --border-strong:  rgba(255, 255, 255, 0.14);
+
+  // Typography
+  --text-primary:   #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted:     #94a3b8;
+  --text-dim:       #475569;
+
+  // Accent (indigo / violet)
+  --accent:         #6366f1;
+  --accent-hover:   #4f46e5;
+  --accent-subtle:  rgba(99, 102, 241, 0.10);
+
+  // Status
+  --success:        #10b981;
+  --warning:        #f59e0b;
+  --danger:         #ef4444;
+
+  // Gradients
+  --gradient-accent:  linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --gradient-text:    linear-gradient(135deg, #818cf8, #a78bfa);
+  --gradient-glow:    radial-gradient(ellipse 50% 40% at 50% 0%, rgba(99,102,241,0.15), transparent);
+
+  // Glass
+  --glass-bg:       rgba(15, 17, 23, 0.85);
+  --glass-blur:     blur(16px);
+
+  // Spacing grid (8px)
+  --sp-1: 8px;
+  --sp-2: 16px;
+  --sp-3: 24px;
+  --sp-4: 32px;
+  --sp-5: 40px;
+  --sp-6: 48px;
+
+  // Typography
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+
+  // Radius
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  20px;
+
+  // Shadows
+  --shadow-card:   0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-modal:  0 16px 64px rgba(0, 0, 0, 0.7);
+  --shadow-glow:   0 0 24px rgba(99, 102, 241, 0.2);
+}
