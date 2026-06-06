@@ -128,10 +128,11 @@ export class ViewerComponent implements OnInit, OnDestroy {
   searchControl = new FormControl('');
   activeDoc = signal<Document | null>(null);
   allDocs = signal<Document[]>([]);
+  private searchQuery = signal('');
   private destroy$ = new Subject<void>();
 
   filteredDocs = computed(() => {
-    const q = this.searchControl.value?.toLowerCase() || '';
+    const q = this.searchQuery().toLowerCase();
     return q ? this.allDocs().filter(d => d.name.toLowerCase().includes(q)) : this.allDocs();
   });
 
@@ -153,6 +154,7 @@ export class ViewerComponent implements OnInit, OnDestroy {
   constructor(private docState: DocumentStateService, private api: ApiService, private router: Router, private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
+    this.searchControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(v => this.searchQuery.set(v ?? ''));
     this.docState.documents$.pipe(takeUntil(this.destroy$)).subscribe(docs => this.allDocs.set(docs));
     if (this.id) {
       this.api.getDocument(this.id).pipe(takeUntil(this.destroy$), catchError(() => EMPTY))

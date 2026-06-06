@@ -177,8 +177,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   getSuggestedQuestions(): string[] {
     const doc = this.activeDoc();
     if (!doc) return [];
-    const q = ['What is the main purpose of this document?', 'Who is mentioned in this document?', 'What is the date in this document?', 'Summarize the key points.'];
+    const q: string[] = [];
     if (doc.extractedFields?.amount) q.push(`What does the amount ${doc.extractedFields.amount} refer to?`);
+    q.push('What is the main purpose of this document?', 'Who is mentioned in this document?', 'What is the date in this document?', 'Summarize the key points.');
     return q.slice(0, 4);
   }
 

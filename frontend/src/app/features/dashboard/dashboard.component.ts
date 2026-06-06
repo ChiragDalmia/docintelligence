@@ -214,7 +214,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   hasTypeData = (): boolean => { const d = this.analytics()?.typeDistribution; return !!d && Object.values(d).some(v => v > 0); };
   hasStatusData = (): boolean => { const d = this.analytics()?.statusDistribution; return !!d && Object.values(d).some(v => v > 0); };
-  getBarWidth(count: number): number { const max = Math.max(...(this.analytics()?.topKeywords?.map(k => k.count) ?? [1])); return max === 0 ? 0 : (count / max) * 100; }
+  getBarWidth(count: number): number { if (!this.analytics()) return 0; const max = Math.max(...(this.analytics()!.topKeywords?.map(k => k.count) ?? [0])); return max === 0 ? 0 : (count / max) * 100; }
 
   ngOnDestroy(): void { this.typeChartInstance?.destroy(); this.statusChartInstance?.destroy(); this.destroy$.next(); this.destroy$.complete(); }
 }
