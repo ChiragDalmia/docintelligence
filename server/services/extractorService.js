@@ -21,103 +21,63 @@ Return format (strict JSON):
 Document text:
 `;
 
-async function extractWithGroq(content) {
-  const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
-  const truncated = content.slice(0, 4000);
-
-  const completion = await client.chat.completions.create({
-    model: 'llama3-8b-8192',
-    messages: [
-      { role: 'user', content: EXTRACTION_PROMPT + truncated }
-    ],
-    temperature: 0,
-    max_tokens: 512
-  });
-
-  const raw = completion.choices[0]?.message?.content || '{}';
-  const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('No JSON found in Groq response');
-
-  const parsed = JSON.parse(jsonMatch[0]);
-  return {
-    name: parsed.name || null,
-    date: parsed.date || null,
-    amount: parsed.amount || null,
-    entities: Array.isArray(parsed.entities) ? parsed.entities : [],
-    customFields: typeof parsed.customFields === 'object' && parsed.customFields !== null
-      ? parsed.customFields
-      : {}
-  };
-}
-
 function extractWithMock(content) {
   const text = content.slice(0, 6000);
-
-  const namePatterns = [
+  let name = null;
+  for (const p of [
     /(?:name|from|to|client|company|issued to)[:\s]+([A-Z][a-zA-Z\s&.,]+?)(?:\n|,|$)/i,
     /^([A-Z][a-zA-Z\s]+(?:Inc|LLC|Ltd|Corp|Co)\.?)$/m
-  ];
-  let name = null;
-  for (const pattern of namePatterns) {
-    const m = text.match(pattern);
-    if (m) { name = m[1].trim(); break; }
-  }
+  ]) { const m = text.match(p); if (m) { name = m[1].trim(); break; } }
 
-  const datePatterns = [
+  let date = null;
+  for (const p of [
     /(\d{4}-\d{2}-\d{2})/,
     /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/,
     /(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}/i
-  ];
-  let date = null;
-  for (const pattern of datePatterns) {
-    const m = text.match(pattern);
-    if (m) { date = m[0].trim(); break; }
-  }
+  ]) { const m = text.match(p); if (m) { date = m[0].trim(); break; } }
 
   const amountMatch = text.match(/[\$€£¥][\s]?\d{1,3}(?:[,.\d]*\d)?(?:\.\d{2})?/);
-  const amount = amountMatch ? amountMatch[0].trim() : null;
-
-  const entityPattern = /\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)\b/g;
   const stopWords = new Set(['The', 'This', 'That', 'With', 'From', 'Into', 'Upon', 'Also']);
   const entitySet = new Set();
   let em;
-  while ((em = entityPattern.exec(text)) !== null && entitySet.size < 10) {
-    const candidate = em[1].trim();
-    if (candidate.length > 2 && !stopWords.has(candidate)) {
-      entitySet.add(candidate);
-    }
+  const ep = /\b([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)*)\b/g;
+  while ((em = ep.exec(text)) !== null && entitySet.size < 10) {
+    if (em[1].length > 2 && !stopWords.has(em[1])) entitySet.add(em[1].trim());
   }
 
   const customFields = {};
-  const invoiceMatch = text.match(/invoice\s*(?:no|number|#)[:\s]*([A-Z0-9-]+)/i);
-  if (invoiceMatch) customFields.invoiceNumber = invoiceMatch[1];
+  const invM = text.match(/invoice\s*(?:no|number|#)[:\s]*([A-Z0-9-]+)/i);
+  if (invM) customFields.invoiceNumber = invM[1];
+  const emailM = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  if (emailM) customFields.email = emailM[0];
+  const phoneM = text.match(/(?:\+?\d[\d\s\-().]{7,}\d)/);
+  if (phoneM) customFields.phone = phoneM[0].trim();
 
-  const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-  if (emailMatch) customFields.email = emailMatch[0];
+  return { name, date, amount: amountMatch ? amountMatch[0].trim() : null, entities: [...entitySet], customFields };
+}
 
-  const phoneMatch = text.match(/(?:\+?\d[\d\s\-().]{7,}\d)/);
-  if (phoneMatch) customFields.phone = phoneMatch[0].trim();
-
+async function extractWithGroq(content) {
+  const raw = (await new Groq({ apiKey: process.env.GROQ_API_KEY }).chat.completions.create({
+    model: 'llama3-8b-8192',
+    messages: [{ role: 'user', content: EXTRACTION_PROMPT + content.slice(0, 4000) }],
+    temperature: 0, max_tokens: 512
+  })).choices[0]?.message?.content || '{}';
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('No JSON found in Groq response');
+  const p = JSON.parse(jsonMatch[0]);
   return {
-    name: name || null,
-    date: date || null,
-    amount: amount || null,
-    entities: Array.from(entitySet),
-    customFields
+    name: p.name || null, date: p.date || null, amount: p.amount || null,
+    entities: Array.isArray(p.entities) ? p.entities : [],
+    customFields: p.customFields && typeof p.customFields === 'object' ? p.customFields : {}
   };
 }
 
 async function extractFields(content) {
   if (process.env.GROQ_API_KEY) {
-    try {
-      const fields = await extractWithGroq(content);
-      return { fields, extractionConfidence: 1.0 };
-    } catch (err) {
-      console.warn('Groq extraction failed, falling back to mock:', err.message);
-    }
+    try { return { fields: await extractWithGroq(content), extractionConfidence: 1.0 }; }
+    catch (e) { console.warn('Groq extraction failed, falling back to mock:', e.message); }
   }
-  const fields = extractWithMock(content);
-  return { fields, extractionConfidence: 0.7 };
+  return { fields: extractWithMock(content), extractionConfidence: 0.7 };
 }
 
-module.exports = { extractFields, extractWithMock, extractWithGroq };
+module.exports = { extractFields, extractWithMock };
