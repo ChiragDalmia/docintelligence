@@ -2,7 +2,7 @@ import {
   Component, ChangeDetectionStrategy, OnInit, OnDestroy,
   ViewChild, ElementRef, signal, AfterViewInit
 } from '@angular/core';
-import { AsyncPipe, NgClass, DecimalPipe, DatePipe } from '@angular/common';
+import { AsyncPipe, DecimalPipe, DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Subject, takeUntil, catchError, EMPTY, interval, switchMap } from 'rxjs';
 import { Chart, registerables } from 'chart.js';
@@ -16,7 +16,7 @@ Chart.register(...registerables);
   selector: 'app-dashboard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, NgClass, DecimalPipe, DatePipe, RouterLink],
+  imports: [AsyncPipe, DecimalPipe, DatePipe, RouterLink],
   template: `
     <div class="dashboard">
       <div class="dash-header">
@@ -29,13 +29,10 @@ Chart.register(...registerables);
             <span class="gb-dot"></span>
             {{ groqEnabled() ? 'Groq AI Active' : 'Mock Mode' }}
           </span>
-          <a routerLink="/upload" class="btn-upload" aria-label="Upload a document">
-            + Upload Document
-          </a>
+          <a routerLink="/upload" class="btn-upload" aria-label="Upload a document">+ Upload Document</a>
         </div>
       </div>
 
-      <!-- Stats cards -->
       <div class="stats-grid">
         <div class="stat-card glass-card">
           <div class="stat-icon icon-docs" aria-hidden="true">
@@ -50,7 +47,6 @@ Chart.register(...registerables);
             <span class="stat-label">Total Documents</span>
           </div>
         </div>
-
         <div class="stat-card glass-card">
           <div class="stat-icon icon-accuracy" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -63,7 +59,6 @@ Chart.register(...registerables);
             <span class="stat-label">Extraction Accuracy</span>
           </div>
         </div>
-
         <div class="stat-card glass-card">
           <div class="stat-icon icon-search" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -76,7 +71,6 @@ Chart.register(...registerables);
             <span class="stat-label">Total Searches</span>
           </div>
         </div>
-
         <div class="stat-card glass-card">
           <div class="stat-icon icon-chat" aria-hidden="true">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -91,28 +85,21 @@ Chart.register(...registerables);
         </div>
       </div>
 
-      <!-- Charts row -->
       <div class="charts-row">
         <div class="chart-card glass-card">
           <h3 class="chart-title">Document Types</h3>
           <div class="chart-wrap">
             <canvas #typeChart aria-label="Document type distribution chart" role="img"></canvas>
           </div>
-          @if (!hasTypeData()) {
-            <div class="chart-empty">No data yet</div>
-          }
+          @if (!hasTypeData()) { <div class="chart-empty">No data yet</div> }
         </div>
-
         <div class="chart-card glass-card">
           <h3 class="chart-title">Processing Status</h3>
           <div class="chart-wrap">
             <canvas #statusChart aria-label="Document status distribution chart" role="img"></canvas>
           </div>
-          @if (!hasStatusData()) {
-            <div class="chart-empty">No data yet</div>
-          }
+          @if (!hasStatusData()) { <div class="chart-empty">No data yet</div> }
         </div>
-
         <div class="keywords-card glass-card">
           <h3 class="chart-title">Top Keywords</h3>
           @if (analytics()?.topKeywords?.length) {
@@ -121,9 +108,7 @@ Chart.register(...registerables);
                 <div class="keyword-row" role="listitem" [attr.aria-label]="kw.word + ': ' + kw.count + ' searches'">
                   <span class="kw-rank">{{ i + 1 }}</span>
                   <span class="kw-word">{{ kw.word }}</span>
-                  <div class="kw-bar-wrap">
-                    <div class="kw-bar" [style.width.%]="getBarWidth(kw.count)"></div>
-                  </div>
+                  <div class="kw-bar-wrap"><div class="kw-bar" [style.width.%]="getBarWidth(kw.count)"></div></div>
                   <span class="kw-count">{{ kw.count }}</span>
                 </div>
               }
@@ -137,7 +122,6 @@ Chart.register(...registerables);
         </div>
       </div>
 
-      <!-- Recent documents -->
       <div class="recent-card glass-card">
         <div class="recent-header">
           <h3 class="chart-title">Recent Documents</h3>
@@ -153,15 +137,10 @@ Chart.register(...registerables);
               <span role="columnheader">Date</span>
             </div>
             @for (doc of (docState.documents$ | async)!.slice(0, 8); track doc.id) {
-              <a class="table-row" [routerLink]="['/viewer', doc.id]" role="row"
-                [attr.aria-label]="'View document: ' + doc.name">
+              <a class="table-row" [routerLink]="['/viewer', doc.id]" role="row" [attr.aria-label]="'View document: ' + doc.name">
                 <span class="tr-name" role="cell" [title]="doc.name">{{ doc.name }}</span>
-                <span role="cell">
-                  <span class="type-badge" [class]="'t-' + doc.type">{{ doc.type.toUpperCase() }}</span>
-                </span>
-                <span role="cell">
-                  <span class="status-pill" [class]="'s-' + doc.processingStatus">{{ doc.processingStatus }}</span>
-                </span>
+                <span role="cell"><span class="type-badge" [class]="'t-' + doc.type">{{ doc.type.toUpperCase() }}</span></span>
+                <span role="cell"><span class="status-pill" [class]="'s-' + doc.processingStatus">{{ doc.processingStatus }}</span></span>
                 <span class="tr-conf" role="cell" [class.high]="doc.extractionConfidence >= 0.9">
                   {{ doc.processingStatus === 'ready' ? (doc.extractionConfidence * 100 | number:'1.0-0') + '%' : '—' }}
                 </span>
@@ -190,119 +169,52 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private statusChartInstance: Chart | null = null;
   private destroy$ = new Subject<void>();
 
-  constructor(
-    public docState: DocumentStateService,
-    private api: ApiService
-  ) {}
+  constructor(public docState: DocumentStateService, private api: ApiService) {}
 
   ngOnInit(): void {
-    this.loadData();
     this.docState.load();
-
-    this.api.getHealth().pipe(
-      takeUntil(this.destroy$),
-      catchError(() => EMPTY)
-    ).subscribe(h => this.groqEnabled.set(h.groqEnabled));
-
+    this.api.getAnalytics().pipe(takeUntil(this.destroy$), catchError(() => EMPTY))
+      .subscribe(a => { this.analytics.set(a); this.updateCharts(a); });
+    this.api.getHealth().pipe(takeUntil(this.destroy$), catchError(() => EMPTY))
+      .subscribe(h => this.groqEnabled.set(h.groqEnabled));
     interval(10000).pipe(
       takeUntil(this.destroy$),
       switchMap(() => this.api.getAnalytics().pipe(catchError(() => EMPTY)))
-    ).subscribe(a => {
-      this.analytics.set(a);
-      this.updateCharts(a);
-    });
+    ).subscribe(a => { this.analytics.set(a); this.updateCharts(a); });
   }
 
   ngAfterViewInit(): void {
-    this.initCharts();
-  }
-
-  private loadData(): void {
-    this.api.getAnalytics().pipe(
-      takeUntil(this.destroy$),
-      catchError(() => EMPTY)
-    ).subscribe(a => {
-      this.analytics.set(a);
-      this.updateCharts(a);
-    });
-  }
-
-  private initCharts(): void {
     const baseOpts = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 } }
-        }
-      }
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 12 } } } }
     };
-
     this.typeChartInstance = new Chart(this.typeChartRef.nativeElement, {
       type: 'doughnut',
       data: { labels: ['PDF', 'TXT'], datasets: [{ data: [0, 0], backgroundColor: ['#ef4444', '#6366f1'], borderColor: 'transparent', borderWidth: 0, hoverOffset: 4 }] },
       options: { ...baseOpts, cutout: '68%' }
     });
-
     this.statusChartInstance = new Chart(this.statusChartRef.nativeElement, {
       type: 'bar',
       data: {
         labels: ['Ready', 'Processing', 'Error'],
-        datasets: [{
-          data: [0, 0, 0],
-          backgroundColor: ['rgba(16,185,129,0.7)', 'rgba(245,158,11,0.7)', 'rgba(239,68,68,0.7)'],
-          borderColor: ['#10b981', '#f59e0b', '#ef4444'],
-          borderWidth: 1,
-          borderRadius: 4
-        }]
+        datasets: [{ data: [0, 0, 0], backgroundColor: ['rgba(16,185,129,0.7)', 'rgba(245,158,11,0.7)', 'rgba(239,68,68,0.7)'], borderColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 1, borderRadius: 4 }]
       },
-      options: {
-        ...baseOpts,
-        scales: {
-          x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-          y: { ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }
-        },
-        plugins: { ...baseOpts.plugins, legend: { display: false } }
-      }
+      options: { ...baseOpts, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } } }, plugins: { ...baseOpts.plugins, legend: { display: false } } }
     });
   }
 
   private updateCharts(a: Analytics): void {
     if (!this.typeChartInstance || !this.statusChartInstance) return;
-
     this.typeChartInstance.data.datasets[0].data = [a.typeDistribution['pdf'] ?? 0, a.typeDistribution['txt'] ?? 0];
     this.typeChartInstance.update('none');
-
-    const processing = Object.entries(a.statusDistribution)
-      .filter(([k]) => !['ready', 'error'].includes(k))
-      .reduce((s, [, v]) => s + v, 0);
-    this.statusChartInstance.data.datasets[0].data = [
-      a.statusDistribution['ready'] ?? 0,
-      processing,
-      a.statusDistribution['error'] ?? 0
-    ];
+    const processing = Object.entries(a.statusDistribution).filter(([k]) => !['ready', 'error'].includes(k)).reduce((s, [, v]) => s + v, 0);
+    this.statusChartInstance.data.datasets[0].data = [a.statusDistribution['ready'] ?? 0, processing, a.statusDistribution['error'] ?? 0];
     this.statusChartInstance.update('none');
   }
 
-  hasTypeData = (): boolean => {
-    const d = this.analytics()?.typeDistribution;
-    return !!d && Object.values(d).some(v => v > 0);
-  };
+  hasTypeData = (): boolean => { const d = this.analytics()?.typeDistribution; return !!d && Object.values(d).some(v => v > 0); };
+  hasStatusData = (): boolean => { const d = this.analytics()?.statusDistribution; return !!d && Object.values(d).some(v => v > 0); };
+  getBarWidth(count: number): number { const max = Math.max(...(this.analytics()?.topKeywords?.map(k => k.count) ?? [1])); return max === 0 ? 0 : (count / max) * 100; }
 
-  hasStatusData = (): boolean => {
-    const d = this.analytics()?.statusDistribution;
-    return !!d && Object.values(d).some(v => v > 0);
-  };
-
-  getBarWidth(count: number): number {
-    const max = Math.max(...(this.analytics()?.topKeywords?.map(k => k.count) ?? [1]));
-    return max === 0 ? 0 : (count / max) * 100;
-  }
-
-  ngOnDestroy(): void {
-    this.typeChartInstance?.destroy();
-    this.statusChartInstance?.destroy();
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void { this.typeChartInstance?.destroy(); this.statusChartInstance?.destroy(); this.destroy$.next(); this.destroy$.complete(); }
 }

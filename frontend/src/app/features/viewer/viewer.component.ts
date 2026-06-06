@@ -1,13 +1,10 @@
-import {
-  Component, ChangeDetectionStrategy, OnInit, Input, signal,
-  computed, OnDestroy, ElementRef, ViewChild
-} from '@angular/core';
-import { AsyncPipe, DatePipe, NgClass, DecimalPipe } from '@angular/common';
+import { Component, ChangeDetectionStrategy, OnInit, Input, signal, computed, OnDestroy, ElementRef, ViewChild } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil, catchError, EMPTY } from 'rxjs';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { Document, SearchResult } from '../../models/document.model';
+import { Document } from '../../models/document.model';
 import { DocumentStateService } from '../../services/document-state.service';
 import { ApiService } from '../../services/api.service';
 
@@ -15,32 +12,18 @@ import { ApiService } from '../../services/api.service';
   selector: 'app-viewer',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, DatePipe, NgClass, DecimalPipe, ReactiveFormsModule],
+  imports: [DatePipe, DecimalPipe, ReactiveFormsModule],
   template: `
     <div class="viewer-layout">
-      <!-- Left panel: document list -->
       <aside class="viewer-sidebar" aria-label="Document list">
         <div class="sidebar-header">
           <h3 class="sidebar-title">Documents</h3>
-          <input
-            [formControl]="searchControl"
-            class="search-input"
-            type="search"
-            placeholder="Search documents…"
-            aria-label="Search documents"
-          />
+          <input [formControl]="searchControl" class="search-input" type="search" placeholder="Search documents…" aria-label="Search documents"/>
         </div>
-
         <div class="doc-list" role="list">
           @for (doc of filteredDocs(); track doc.id) {
-            <button
-              class="doc-list-item"
-              [class.active]="activeDoc()?.id === doc.id"
-              (click)="selectDoc(doc)"
-              [attr.aria-label]="'Select document: ' + doc.name"
-              [attr.aria-pressed]="activeDoc()?.id === doc.id"
-              role="listitem"
-            >
+            <button class="doc-list-item" [class.active]="activeDoc()?.id === doc.id" (click)="selectDoc(doc)"
+              [attr.aria-label]="'Select document: ' + doc.name" [attr.aria-pressed]="activeDoc()?.id === doc.id" role="listitem">
               <div class="dli-type" [class]="'type-' + doc.type">{{ doc.type.toUpperCase() }}</div>
               <div class="dli-meta">
                 <span class="dli-name">{{ doc.name }}</span>
@@ -49,14 +32,10 @@ import { ApiService } from '../../services/api.service';
               <div class="dli-status" [class]="'s-' + doc.processingStatus"></div>
             </button>
           }
-
-          @if (filteredDocs().length === 0) {
-            <p class="no-results">No documents found</p>
-          }
+          @if (filteredDocs().length === 0) { <p class="no-results">No documents found</p> }
         </div>
       </aside>
 
-      <!-- Right panel: viewer + fields -->
       <main class="viewer-main" role="main">
         @if (!activeDoc()) {
           <div class="empty-viewer">
@@ -72,9 +51,7 @@ import { ApiService } from '../../services/api.service';
             <div class="viewer-header">
               <div class="vh-left">
                 <h2 class="doc-title">{{ activeDoc()!.name }}</h2>
-                <span class="doc-status" [class]="'status-' + activeDoc()!.processingStatus">
-                  {{ activeDoc()!.processingStatus }}
-                </span>
+                <span class="doc-status" [class]="'status-' + activeDoc()!.processingStatus">{{ activeDoc()!.processingStatus }}</span>
               </div>
               <div class="vh-actions">
                 <button class="btn-ghost" (click)="openChat()" aria-label="Chat with this document">
@@ -87,56 +64,33 @@ import { ApiService } from '../../services/api.service';
             </div>
 
             <div class="viewer-body">
-              <!-- Extracted fields panel -->
               <div class="fields-panel glass-card">
                 <h4 class="fields-title">Extracted Fields</h4>
 
                 @if (activeDoc()!.extractedFields?.name) {
-                  <div class="field-row">
-                    <span class="field-key">Name</span>
-                    <button class="field-val clickable" (click)="scrollToField(activeDoc()!.extractedFields.name!)">
-                      {{ activeDoc()!.extractedFields.name }}
-                    </button>
-                  </div>
+                  <div class="field-row"><span class="field-key">Name</span>
+                    <button class="field-val clickable" (click)="scrollToField(activeDoc()!.extractedFields.name!)">{{ activeDoc()!.extractedFields.name }}</button></div>
                 }
-
                 @if (activeDoc()!.extractedFields?.date) {
-                  <div class="field-row">
-                    <span class="field-key">Date</span>
-                    <button class="field-val clickable" (click)="scrollToField(activeDoc()!.extractedFields.date!)">
-                      {{ activeDoc()!.extractedFields.date }}
-                    </button>
-                  </div>
+                  <div class="field-row"><span class="field-key">Date</span>
+                    <button class="field-val clickable" (click)="scrollToField(activeDoc()!.extractedFields.date!)">{{ activeDoc()!.extractedFields.date }}</button></div>
                 }
-
                 @if (activeDoc()!.extractedFields?.amount) {
-                  <div class="field-row">
-                    <span class="field-key">Amount</span>
-                    <button class="field-val clickable" (click)="scrollToField(activeDoc()!.extractedFields.amount!)">
-                      {{ activeDoc()!.extractedFields.amount }}
-                    </button>
-                  </div>
+                  <div class="field-row"><span class="field-key">Amount</span>
+                    <button class="field-val clickable" (click)="scrollToField(activeDoc()!.extractedFields.amount!)">{{ activeDoc()!.extractedFields.amount }}</button></div>
                 }
-
                 @if (activeDoc()!.extractedFields?.entities?.length) {
-                  <div class="field-row entities-row">
-                    <span class="field-key">Entities</span>
+                  <div class="field-row entities-row"><span class="field-key">Entities</span>
                     <div class="entity-chips">
                       @for (e of activeDoc()!.extractedFields.entities!; track e) {
-                        <button class="entity-chip" (click)="scrollToField(e)" [attr.aria-label]="'Jump to ' + e + ' in document'">
-                          {{ e }}
-                        </button>
+                        <button class="entity-chip" (click)="scrollToField(e)" [attr.aria-label]="'Jump to ' + e + ' in document'">{{ e }}</button>
                       }
                     </div>
                   </div>
                 }
-
                 @if (activeDoc()!.extractedFields?.customFields) {
                   @for (entry of customFieldEntries(); track entry[0]) {
-                    <div class="field-row">
-                      <span class="field-key">{{ entry[0] }}</span>
-                      <span class="field-val mono">{{ entry[1] }}</span>
-                    </div>
+                    <div class="field-row"><span class="field-key">{{ entry[0] }}</span><span class="field-val mono">{{ entry[1] }}</span></div>
                   }
                 }
 
@@ -145,26 +99,19 @@ import { ApiService } from '../../services/api.service';
                   <div class="conf-bar-wrap">
                     <div class="conf-bar-track">
                       <div class="conf-bar-fill" [style.width.%]="activeDoc()!.extractionConfidence * 100"
-                        [class.high]="activeDoc()!.extractionConfidence >= 0.9">
-                      </div>
+                        [class.high]="activeDoc()!.extractionConfidence >= 0.9"></div>
                     </div>
                     <span class="conf-pct">{{ (activeDoc()!.extractionConfidence * 100).toFixed(0) }}%</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Document text with highlights -->
               <div class="text-panel" #textPanel>
                 <div class="text-toolbar">
                   <span class="text-label">Document Content</span>
                   <span class="char-count">{{ activeDoc()!.content.length | number }} chars</span>
                 </div>
-                <div
-                  class="doc-text"
-                  [innerHTML]="highlightedContent()"
-                  aria-label="Document content"
-                  aria-live="polite"
-                ></div>
+                <div class="doc-text" [innerHTML]="highlightedContent()" aria-label="Document content" aria-live="polite"></div>
               </div>
             </div>
           </div>
@@ -185,83 +132,42 @@ export class ViewerComponent implements OnInit, OnDestroy {
 
   filteredDocs = computed(() => {
     const q = this.searchControl.value?.toLowerCase() || '';
-    if (!q) return this.allDocs();
-    return this.allDocs().filter(d => d.name.toLowerCase().includes(q));
+    return q ? this.allDocs().filter(d => d.name.toLowerCase().includes(q)) : this.allDocs();
   });
 
   highlightedContent = computed((): SafeHtml => {
     const doc = this.activeDoc();
     if (!doc?.content) return '';
-
-    const fields = doc.extractedFields;
-    const terms: string[] = [];
-
-    if (fields?.name) terms.push(fields.name);
-    if (fields?.date) terms.push(fields.date);
-    if (fields?.amount) terms.push(fields.amount);
-    if (fields?.entities) terms.push(...fields.entities);
-    if (fields?.customFields) terms.push(...Object.values(fields.customFields));
-
-    let text = doc.content
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br>');
-
+    const f = doc.extractedFields;
+    const terms = [f?.name, f?.date, f?.amount, ...(f?.entities ?? []), ...Object.values(f?.customFields ?? {})].filter(Boolean) as string[];
+    let text = doc.content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
     for (const term of terms) {
-      if (!term || term.length < 2) continue;
-      const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(`(${escaped})`, 'gi');
-      text = text.replace(regex, '<mark class="field-highlight">$1</mark>');
+      if (term.length < 2) continue;
+      text = text.replace(new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<mark class="field-highlight">$1</mark>');
     }
-
     return this.sanitizer.bypassSecurityTrustHtml(text);
   });
 
-  customFieldEntries = computed((): [string, string][] => {
-    const cf = this.activeDoc()?.extractedFields?.customFields;
-    if (!cf) return [];
-    return Object.entries(cf);
-  });
+  customFieldEntries = computed((): [string, string][] => Object.entries(this.activeDoc()?.extractedFields?.customFields ?? {}));
 
-  constructor(
-    private docState: DocumentStateService,
-    private api: ApiService,
-    private router: Router,
-    private sanitizer: DomSanitizer
-  ) {}
+  constructor(private docState: DocumentStateService, private api: ApiService, private router: Router, private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
-    this.docState.documents$.pipe(takeUntil(this.destroy$)).subscribe(docs => {
-      this.allDocs.set(docs);
-    });
-
+    this.docState.documents$.pipe(takeUntil(this.destroy$)).subscribe(docs => this.allDocs.set(docs));
     if (this.id) {
-      this.api.getDocument(this.id).pipe(
-        takeUntil(this.destroy$),
-        catchError(() => EMPTY)
-      ).subscribe(doc => {
-        this.activeDoc.set(doc);
-        this.docState.select(doc);
-      });
+      this.api.getDocument(this.id).pipe(takeUntil(this.destroy$), catchError(() => EMPTY))
+        .subscribe(doc => { this.activeDoc.set(doc); this.docState.select(doc); });
     } else {
-      this.docState.selected$.pipe(takeUntil(this.destroy$)).subscribe(doc => {
-        this.activeDoc.set(doc);
-      });
+      this.docState.selected$.pipe(takeUntil(this.destroy$)).subscribe(doc => this.activeDoc.set(doc));
     }
-
     this.docState.load();
   }
 
-  selectDoc(doc: Document): void {
-    this.activeDoc.set(doc);
-    this.docState.select(doc);
-  }
+  selectDoc(doc: Document): void { this.activeDoc.set(doc); this.docState.select(doc); }
 
   scrollToField(term: string): void {
-    if (!this.textPanel?.nativeElement) return;
-    const panel = this.textPanel.nativeElement;
-    const marks = panel.querySelectorAll('mark.field-highlight');
+    const marks = this.textPanel?.nativeElement?.querySelectorAll('mark.field-highlight');
+    if (!marks) return;
     for (const mark of Array.from(marks)) {
       if (mark.textContent?.toLowerCase().includes(term.toLowerCase())) {
         mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -272,14 +178,7 @@ export class ViewerComponent implements OnInit, OnDestroy {
     }
   }
 
-  openChat(): void {
-    const doc = this.activeDoc();
-    if (doc) this.docState.select(doc);
-    this.router.navigate(['/chat']);
-  }
+  openChat(): void { if (this.activeDoc()) this.docState.select(this.activeDoc()); this.router.navigate(['/chat']); }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
 }

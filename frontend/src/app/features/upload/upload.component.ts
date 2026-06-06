@@ -1,10 +1,7 @@
-import {
-  Component, ChangeDetectionStrategy, signal, computed,
-  ElementRef, ViewChild, HostListener, OnDestroy
-} from '@angular/core';
-import { AsyncPipe, NgClass, PercentPipe } from '@angular/common';
+import { Component, ChangeDetectionStrategy, signal, computed, OnDestroy } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { Router } from '@angular/router';
-import { Subject, takeUntil, interval, switchMap, take, tap, catchError, EMPTY } from 'rxjs';
+import { Subject, takeUntil, interval, switchMap, tap, catchError, EMPTY } from 'rxjs';
 import { ApiService } from '../../services/api.service';
 import { DocumentStateService } from '../../services/document-state.service';
 import { ProcessingStatus, PIPELINE_STEPS, STATUS_LABELS, Document } from '../../models/document.model';
@@ -13,36 +10,18 @@ import { ProcessingStatus, PIPELINE_STEPS, STATUS_LABELS, Document } from '../..
   selector: 'app-upload',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgClass, AsyncPipe, PercentPipe],
+  imports: [NgClass],
   template: `
     <div class="upload-page">
       <div class="upload-card glass-card">
         <h2 class="card-title">Upload Document</h2>
         <p class="card-subtitle">Supports PDF and TXT files up to 10 MB</p>
 
-        <div
-          #dropZone
-          class="drop-zone"
-          [class.drag-over]="isDragOver()"
-          [class.has-file]="selectedFile()"
-          role="button"
-          tabindex="0"
-          aria-label="Drop zone: drag and drop a PDF or TXT file here, or click to browse"
-          (dragover)="onDragOver($event)"
-          (dragleave)="onDragLeave()"
-          (drop)="onDrop($event)"
-          (click)="fileInput.click()"
-          (keydown.enter)="fileInput.click()"
-          (keydown.space)="fileInput.click()"
-        >
-          <input
-            #fileInput
-            type="file"
-            accept=".pdf,.txt"
-            class="sr-only"
-            aria-hidden="true"
-            (change)="onFileSelected($event)"
-          />
+        <div class="drop-zone" [class.drag-over]="isDragOver()" [class.has-file]="selectedFile()"
+          role="button" tabindex="0" aria-label="Drop zone: drag and drop a PDF or TXT file here, or click to browse"
+          (dragover)="onDragOver($event)" (dragleave)="onDragLeave()" (drop)="onDrop($event)"
+          (click)="fileInput.click()" (keydown.enter)="fileInput.click()" (keydown.space)="fileInput.click()">
+          <input #fileInput type="file" accept=".pdf,.txt" class="sr-only" aria-hidden="true" (change)="onFileSelected($event)"/>
 
           @if (!selectedFile()) {
             <div class="dz-idle" aria-live="polite">
@@ -86,12 +65,7 @@ import { ProcessingStatus, PIPELINE_STEPS, STATUS_LABELS, Document } from '../..
         }
 
         @if (!isUploading()) {
-          <button
-            class="btn-primary"
-            [disabled]="!selectedFile()"
-            (click)="startUpload()"
-            aria-label="Process document with AI"
-          >
+          <button class="btn-primary" [disabled]="!selectedFile()" (click)="startUpload()" aria-label="Process document with AI">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
               <path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13z" stroke="currentColor" stroke-width="1.5"/>
               <path d="M5.5 8l2 2 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
@@ -119,15 +93,11 @@ import { ProcessingStatus, PIPELINE_STEPS, STATUS_LABELS, Document } from '../..
               <li class="step" [class]="getStepClass(step)">
                 <div class="step-indicator" aria-hidden="true">
                   @if (getStepClass(step) === 'done') {
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M2.5 7l3 3 6-6" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 7l3 3 6-6" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   } @else if (getStepClass(step) === 'active') {
                     <div class="spinner" role="status" aria-label="Processing"></div>
                   } @else if (getStepClass(step) === 'error') {
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M2.5 2.5l9 9M11.5 2.5l-9 9" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 2.5l9 9M11.5 2.5l-9 9" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>
                   } @else {
                     <div class="step-dot"></div>
                   }
@@ -154,8 +124,6 @@ import { ProcessingStatus, PIPELINE_STEPS, STATUS_LABELS, Document } from '../..
   styleUrls: ['./upload.component.scss']
 })
 export class UploadComponent implements OnDestroy {
-  @ViewChild('dropZone') dropZone!: ElementRef<HTMLDivElement>;
-
   readonly pipelineSteps = PIPELINE_STEPS;
   readonly stepLabels = STATUS_LABELS;
 
@@ -169,53 +137,29 @@ export class UploadComponent implements OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(
-    private api: ApiService,
-    private docState: DocumentStateService,
-    private router: Router
-  ) {}
+  constructor(private api: ApiService, private docState: DocumentStateService, private router: Router) {}
 
-  onDragOver(e: DragEvent): void {
-    e.preventDefault();
-    e.stopPropagation();
-    this.isDragOver.set(true);
-  }
-
-  onDragLeave(): void {
-    this.isDragOver.set(false);
-  }
+  onDragOver(e: DragEvent): void { e.preventDefault(); e.stopPropagation(); this.isDragOver.set(true); }
+  onDragLeave(): void { this.isDragOver.set(false); }
 
   onDrop(e: DragEvent): void {
-    e.preventDefault();
-    e.stopPropagation();
-    this.isDragOver.set(false);
+    e.preventDefault(); e.stopPropagation(); this.isDragOver.set(false);
     const file = e.dataTransfer?.files[0];
     if (file) this.setFile(file);
   }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) this.setFile(file);
+    if (input.files?.[0]) this.setFile(input.files[0]);
     input.value = '';
   }
 
-  clearFile(e: Event): void {
-    e.stopPropagation();
-    this.selectedFile.set(null);
-    this.error.set(null);
-  }
+  clearFile(e: Event): void { e.stopPropagation(); this.selectedFile.set(null); this.error.set(null); }
 
   private setFile(file: File): void {
     const ext = file.name.split('.').pop()?.toLowerCase();
-    if (!['pdf', 'txt'].includes(ext ?? '')) {
-      this.error.set('Only PDF and TXT files are supported.');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      this.error.set('File exceeds 10 MB limit.');
-      return;
-    }
+    if (!['pdf', 'txt'].includes(ext ?? '')) { this.error.set('Only PDF and TXT files are supported.'); return; }
+    if (file.size > 10 * 1024 * 1024) { this.error.set('File exceeds 10 MB limit.'); return; }
     this.error.set(null);
     this.selectedFile.set(file);
   }
@@ -223,26 +167,18 @@ export class UploadComponent implements OnDestroy {
   startUpload(): void {
     const file = this.selectedFile();
     if (!file) return;
-
-    this.isUploading.set(true);
-    this.error.set(null);
-    this.currentStatus.set('uploading');
-    this.uploadedDocId.set(null);
+    this.isUploading.set(true); this.error.set(null);
+    this.currentStatus.set('uploading'); this.uploadedDocId.set(null);
 
     this.api.uploadDocument(file).pipe(
       takeUntil(this.destroy$),
       tap(event => {
         this.uploadProgress.set(event.progress);
-        if (event.id) {
-          this.uploadedDocId.set(event.id);
-          this.pollStatus(event.id);
-        }
+        if (event.id) { this.uploadedDocId.set(event.id); this.pollStatus(event.id); }
       }),
       catchError(err => {
         this.error.set(err?.error?.error ?? 'Upload failed. Please try again.');
-        this.isUploading.set(false);
-        this.currentStatus.set('error');
-        return EMPTY;
+        this.isUploading.set(false); this.currentStatus.set('error'); return EMPTY;
       })
     ).subscribe();
   }
@@ -255,8 +191,7 @@ export class UploadComponent implements OnDestroy {
         this.currentStatus.set(doc.processingStatus);
         this.docState.upsert(doc);
         if (doc.processingStatus === 'ready' || doc.processingStatus === 'error') {
-          this.isUploading.set(false);
-          this.destroy$.next();
+          this.isUploading.set(false); this.destroy$.next();
         }
       }),
       catchError(() => EMPTY)
@@ -266,23 +201,16 @@ export class UploadComponent implements OnDestroy {
   getStepClass(step: ProcessingStatus): 'done' | 'active' | 'pending' | 'error' {
     const status = this.currentStatus();
     if (!status) return 'pending';
-    if (status === 'error') {
-      const stepIdx = PIPELINE_STEPS.indexOf(step);
-      const statusIdx = PIPELINE_STEPS.indexOf('ready');
-      return stepIdx < statusIdx ? 'done' : 'error';
-    }
-    const stepIdx = PIPELINE_STEPS.indexOf(step);
-    const statusIdx = PIPELINE_STEPS.indexOf(status as ProcessingStatus);
+    if (status === 'error') return PIPELINE_STEPS.indexOf(step) < PIPELINE_STEPS.indexOf('ready') ? 'done' : 'error';
     if (status === 'ready') return 'done';
-    if (stepIdx < statusIdx) return 'done';
-    if (stepIdx === statusIdx) return 'active';
+    const si = PIPELINE_STEPS.indexOf(status as ProcessingStatus);
+    const di = PIPELINE_STEPS.indexOf(step);
+    if (di < si) return 'done';
+    if (di === si) return 'active';
     return 'pending';
   }
 
-  viewDocument(): void {
-    const id = this.uploadedDocId();
-    if (id) this.router.navigate(['/viewer', id]);
-  }
+  viewDocument(): void { const id = this.uploadedDocId(); if (id) this.router.navigate(['/viewer', id]); }
 
   chatWithDocument(): void {
     const id = this.uploadedDocId();
@@ -294,12 +222,8 @@ export class UploadComponent implements OnDestroy {
   }
 
   resetUpload(): void {
-    this.selectedFile.set(null);
-    this.isUploading.set(false);
-    this.uploadProgress.set(0);
-    this.error.set(null);
-    this.currentStatus.set(null);
-    this.uploadedDocId.set(null);
+    this.selectedFile.set(null); this.isUploading.set(false); this.uploadProgress.set(0);
+    this.error.set(null); this.currentStatus.set(null); this.uploadedDocId.set(null);
   }
 
   formatSize(bytes: number): string {
@@ -308,8 +232,5 @@ export class UploadComponent implements OnDestroy {
     return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
 }

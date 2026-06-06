@@ -1,8 +1,8 @@
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, signal } from '@angular/core';
-import { AsyncPipe, DatePipe, NgClass, DecimalPipe } from '@angular/common';
+import { AsyncPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Subject, takeUntil, catchError, EMPTY } from 'rxjs';
-import { Document, ProcessingStatus } from '../../models/document.model';
+import { Document } from '../../models/document.model';
 import { DocumentStateService } from '../../services/document-state.service';
 import { ApiService } from '../../services/api.service';
 
@@ -10,7 +10,7 @@ import { ApiService } from '../../services/api.service';
   selector: 'app-documents',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AsyncPipe, DatePipe, NgClass, DecimalPipe, RouterLink],
+  imports: [AsyncPipe, DatePipe, DecimalPipe, RouterLink],
   template: `
     <div class="documents-page">
       <div class="page-header">
@@ -24,9 +24,7 @@ import { ApiService } from '../../services/api.service';
       @if (docState.loading$ | async) {
         <div class="loading-state" role="status" aria-live="polite">
           <div class="skeleton-list">
-            @for (i of [1,2,3]; track i) {
-              <div class="skeleton-row"></div>
-            }
+            @for (i of [1,2,3]; track i) { <div class="skeleton-row"></div> }
           </div>
         </div>
       } @else if ((docState.documents$ | async)?.length === 0) {
@@ -44,20 +42,11 @@ import { ApiService } from '../../services/api.service';
       } @else {
         <div class="doc-grid">
           @for (doc of docState.documents$ | async; track doc.id) {
-            <article
-              class="doc-card glass-card"
-              [class.selected]="isSelected(doc)"
-              (click)="selectAndView(doc)"
-              role="button"
-              tabindex="0"
+            <article class="doc-card glass-card" (click)="selectAndView(doc)" role="button" tabindex="0"
               [attr.aria-label]="'Document: ' + doc.name + ', status: ' + doc.processingStatus"
-              (keydown.enter)="selectAndView(doc)"
-              (keydown.space)="selectAndView(doc)"
-            >
+              (keydown.enter)="selectAndView(doc)" (keydown.space)="selectAndView(doc)">
               <div class="doc-card-header">
-                <div class="doc-type-badge" [class]="'type-' + doc.type" aria-label="File type: {{ doc.type }}">
-                  {{ doc.type.toUpperCase() }}
-                </div>
+                <div class="doc-type-badge" [class]="'type-' + doc.type" aria-label="File type: {{ doc.type }}">{{ doc.type.toUpperCase() }}</div>
                 <span class="doc-status-badge" [class]="'status-' + doc.processingStatus" [attr.aria-label]="'Status: ' + doc.processingStatus">
                   @if (doc.processingStatus !== 'ready' && doc.processingStatus !== 'error') {
                     <span class="status-spinner" aria-hidden="true"></span>
@@ -70,37 +59,26 @@ import { ApiService } from '../../services/api.service';
 
               @if (doc.processingStatus === 'ready') {
                 <div class="doc-fields">
-                  @if (doc.extractedFields?.name) {
-                    <span class="field-chip">{{ doc.extractedFields.name }}</span>
-                  }
-                  @if (doc.extractedFields?.date) {
-                    <span class="field-chip">{{ doc.extractedFields.date }}</span>
-                  }
-                  @if (doc.extractedFields?.amount) {
-                    <span class="field-chip">{{ doc.extractedFields.amount }}</span>
-                  }
+                  @if (doc.extractedFields?.name) { <span class="field-chip">{{ doc.extractedFields.name }}</span> }
+                  @if (doc.extractedFields?.date) { <span class="field-chip">{{ doc.extractedFields.date }}</span> }
+                  @if (doc.extractedFields?.amount) { <span class="field-chip">{{ doc.extractedFields.amount }}</span> }
                 </div>
-
                 <div class="doc-confidence">
                   <div class="confidence-track" role="progressbar"
-                    [attr.aria-valuenow]="doc.extractionConfidence * 100"
-                    aria-valuemin="0" aria-valuemax="100"
+                    [attr.aria-valuenow]="doc.extractionConfidence * 100" aria-valuemin="0" aria-valuemax="100"
                     [attr.aria-label]="'Extraction confidence: ' + (doc.extractionConfidence * 100 | number:'1.0-0') + '%'">
                     <div class="confidence-fill" [style.width.%]="doc.extractionConfidence * 100"
                       [class.high]="doc.extractionConfidence >= 0.9"
-                      [class.med]="doc.extractionConfidence >= 0.6 && doc.extractionConfidence < 0.9">
-                    </div>
+                      [class.med]="doc.extractionConfidence >= 0.6 && doc.extractionConfidence < 0.9"></div>
                   </div>
                   <span class="confidence-label">{{ doc.extractionConfidence * 100 | number:'1.0-0' }}% accuracy</span>
                 </div>
               }
 
               <div class="doc-footer">
-                <time class="doc-date" [dateTime]="doc.createdAt | date:'yyyy-MM-dd'">
-                  {{ doc.createdAt | date:'MMM d, y' }}
-                </time>
+                <time class="doc-date" [dateTime]="doc.createdAt | date:'yyyy-MM-dd'">{{ doc.createdAt | date:'MMM d, y' }}</time>
                 <div class="doc-actions" (click)="$event.stopPropagation()">
-                  <button class="icon-btn" (click)="viewDoc(doc)" aria-label="View document">
+                  <button class="icon-btn" (click)="selectAndView(doc)" aria-label="View document">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7s2-4 6-4 6 4 6 4-2 4-6 4-6-4-6-4z" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.3"/></svg>
                   </button>
                   <button class="icon-btn" (click)="chatDoc(doc)" aria-label="Chat with document">
@@ -123,27 +101,15 @@ export class DocumentsComponent implements OnInit, OnDestroy {
   deletingId = signal<string | null>(null);
   private destroy$ = new Subject<void>();
 
-  constructor(
-    public docState: DocumentStateService,
-    private api: ApiService,
-    private router: Router
-  ) {}
+  constructor(public docState: DocumentStateService, private api: ApiService, private router: Router) {}
 
   ngOnInit(): void {
     this.docState.load();
     this.docState.startPolling(3000).pipe(takeUntil(this.destroy$)).subscribe();
   }
 
-  isSelected(doc: Document): boolean {
-    return false;
-  }
-
   selectAndView(doc: Document): void {
     this.docState.select(doc);
-    this.router.navigate(['/viewer', doc.id]);
-  }
-
-  viewDoc(doc: Document): void {
     this.router.navigate(['/viewer', doc.id]);
   }
 
@@ -158,14 +124,8 @@ export class DocumentsComponent implements OnInit, OnDestroy {
     this.api.deleteDocument(doc.id).pipe(
       takeUntil(this.destroy$),
       catchError(() => { this.deletingId.set(null); return EMPTY; })
-    ).subscribe(() => {
-      this.docState.remove(doc.id);
-      this.deletingId.set(null);
-    });
+    ).subscribe(() => { this.docState.remove(doc.id); this.deletingId.set(null); });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
+  ngOnDestroy(): void { this.destroy$.next(); this.destroy$.complete(); }
 }
