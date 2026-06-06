@@ -67,19 +67,19 @@ import { ApiService } from '../../services/api.service';
               <div class="fields-panel glass-card">
                 <h4 class="fields-title">Extracted Fields</h4>
 
-                @if (activeDoc()!.extractedFields?.name) {
+                @if (activeDoc()!.extractedFields.name) {
                   <div class="field-row"><span class="field-key">Name</span>
                     <button class="field-val clickable" (click)="scrollToField(activeDoc()!.extractedFields.name!)">{{ activeDoc()!.extractedFields.name }}</button></div>
                 }
-                @if (activeDoc()!.extractedFields?.date) {
+                @if (activeDoc()!.extractedFields.date) {
                   <div class="field-row"><span class="field-key">Date</span>
                     <button class="field-val clickable" (click)="scrollToField(activeDoc()!.extractedFields.date!)">{{ activeDoc()!.extractedFields.date }}</button></div>
                 }
-                @if (activeDoc()!.extractedFields?.amount) {
+                @if (activeDoc()!.extractedFields.amount) {
                   <div class="field-row"><span class="field-key">Amount</span>
                     <button class="field-val clickable" (click)="scrollToField(activeDoc()!.extractedFields.amount!)">{{ activeDoc()!.extractedFields.amount }}</button></div>
                 }
-                @if (activeDoc()!.extractedFields?.entities?.length) {
+                @if (activeDoc()!.extractedFields.entities?.length) {
                   <div class="field-row entities-row"><span class="field-key">Entities</span>
                     <div class="entity-chips">
                       @for (e of activeDoc()!.extractedFields.entities!; track e) {
@@ -88,7 +88,7 @@ import { ApiService } from '../../services/api.service';
                     </div>
                   </div>
                 }
-                @if (activeDoc()!.extractedFields?.customFields) {
+                @if (activeDoc()!.extractedFields.customFields) {
                   @for (entry of customFieldEntries(); track entry[0]) {
                     <div class="field-row"><span class="field-key">{{ entry[0] }}</span><span class="field-val mono">{{ entry[1] }}</span></div>
                   }

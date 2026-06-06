@@ -46,7 +46,7 @@ import { ApiService } from '../../services/api.service';
               [attr.aria-label]="'Document: ' + doc.name + ', status: ' + doc.processingStatus"
               (keydown.enter)="selectAndView(doc)" (keydown.space)="selectAndView(doc)">
               <div class="doc-card-header">
-                <div class="doc-type-badge" [class]="'type-' + doc.type" aria-label="File type: {{ doc.type }}">{{ doc.type.toUpperCase() }}</div>
+                <div class="doc-type-badge" [class]="'type-' + doc.type" [attr.aria-label]="'File type: ' + doc.type">{{ doc.type.toUpperCase() }}</div>
                 <span class="doc-status-badge" [class]="'status-' + doc.processingStatus" [attr.aria-label]="'Status: ' + doc.processingStatus">
                   @if (doc.processingStatus !== 'ready' && doc.processingStatus !== 'error') {
                     <span class="status-spinner" aria-hidden="true"></span>
@@ -59,9 +59,9 @@ import { ApiService } from '../../services/api.service';
 
               @if (doc.processingStatus === 'ready') {
                 <div class="doc-fields">
-                  @if (doc.extractedFields?.name) { <span class="field-chip">{{ doc.extractedFields.name }}</span> }
-                  @if (doc.extractedFields?.date) { <span class="field-chip">{{ doc.extractedFields.date }}</span> }
-                  @if (doc.extractedFields?.amount) { <span class="field-chip">{{ doc.extractedFields.amount }}</span> }
+                  @if (doc.extractedFields.name) { <span class="field-chip">{{ doc.extractedFields.name }}</span> }
+                  @if (doc.extractedFields.date) { <span class="field-chip">{{ doc.extractedFields.date }}</span> }
+                  @if (doc.extractedFields.amount) { <span class="field-chip">{{ doc.extractedFields.amount }}</span> }
                 </div>
                 <div class="doc-confidence">
                   <div class="confidence-track" role="progressbar"

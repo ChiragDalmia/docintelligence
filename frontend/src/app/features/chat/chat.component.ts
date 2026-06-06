@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, OnInit, OnDestroy, signal, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { AsyncPipe, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
-import { Subject, takeUntil, catchError, EMPTY } from 'rxjs';
+import { Observable, Subject, takeUntil, catchError, EMPTY, map } from 'rxjs';
 import { Document, ChatMessage } from '../../models/document.model';
 import { DocumentStateService } from '../../services/document-state.service';
 import { ApiService } from '../../services/api.service';
@@ -30,7 +30,7 @@ import { ApiService } from '../../services/api.service';
               </button>
             }
           }
-          @if (((docState.documents$ | async) ?? []).filter(d => d.processingStatus === 'ready').length === 0) {
+          @if ((readyDocs$ | async)?.length === 0) {
             <p class="no-docs">No ready documents yet. Upload one first.</p>
           }
         </div>
@@ -122,6 +122,7 @@ import { ApiService } from '../../services/api.service';
 export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messagesEnd') messagesEnd!: ElementRef<HTMLDivElement>;
 
+  readyDocs$!: Observable<Document[]>;
   activeDoc = signal<Document | null>(null);
   messages = signal<ChatMessage[]>([]);
   isLoading = signal(false);
@@ -131,7 +132,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewChecked {
   private destroy$ = new Subject<void>();
   private shouldScroll = false;
 
-  constructor(public docState: DocumentStateService, private api: ApiService) {}
+  constructor(public docState: DocumentStateService, private api: ApiService) {
+    this.readyDocs$ = docState.documents$.pipe(map(docs => docs.filter(d => d.processingStatus === 'ready')));
+  }
 
   ngOnInit(): void {
     this.docState.selected$.pipe(takeUntil(this.destroy$)).subscribe(doc => {
