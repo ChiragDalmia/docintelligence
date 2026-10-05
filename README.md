@@ -1,5 +1,7 @@
 # DocIntelligence
 
+**Case study:** [chiragdalmia.com/projects/docintelligence](https://www.chiragdalmia.com/projects/docintelligence)
+
 An AI-powered document processing platform that extracts structured data from PDFs and text files, runs semantic search across your document library, and lets you have a real conversation with any document you've uploaded.
 
 Built this as a way to explore how LLMs can replace the painful manual work of reading through contracts, invoices, and reports looking for specific information.
